@@ -1,0 +1,36 @@
+services:
+  - type: web
+    name: dr-r-portal
+    runtime: python
+    plan: starter
+    region: oregon
+    buildCommand: |
+      pip install -r requirements.txt
+      python manage.py collectstatic --noinput
+    preDeployCommand: python manage.py migrate
+    startCommand: gunicorn dr_r.wsgi:application
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.0
+      - key: DJANGO_SETTINGS_MODULE
+        value: dr_r.settings
+      - key: SECRET_KEY
+        generateValue: true
+      - key: GROQ_API_KEY
+        sync: false  # You'll enter this in Render dashboard
+      - key: GROQ_MODEL
+        value: llama-3.1-8b-instant
+      - key: DEBUG
+        value: "False"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: dr-r-db
+          property: connectionString
+
+databases:
+  - name: dr-r-db
+    databaseName: dr_r_db
+    user: dr_r_user
+    plan: basic-256mb  # or free if available
+    region: oregon
+    ipAllowList: []  # Only internal connections (more secure)
